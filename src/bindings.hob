@@ -1,0 +1,7 @@
+public type Mutex = [40]u8;
+public type Attrs = i32;
+
+public extern(pthread_mutex_init) fun Mutex.init(&self, attrs: *Attrs) -> i32;
+public extern(pthread_mutex_lock) fun Mutex.lock(&self) -> i32;
+public extern(pthread_mutex_unlock) fun Mutex.unlock(&self) -> i32;
+public extern(pthread_mutex_destroy) fun Mutex.destroy(&self) -> i32;

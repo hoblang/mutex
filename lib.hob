@@ -1,0 +1,64 @@
+import std;
+import c;
+import result;
+import "src/bindings.hob" as bindings;
+
+use result.{ NoneResult, Result };
+
+public type Mutex<T> = struct {
+    mutex: bindings.Mutex,
+    value: T,
+};
+
+public fun new<T>(value: T) -> Mutex.<T> {
+    var mutex: bindings.Mutex;
+    mutex.init(std.null.<bindings.Attrs>());
+    return {
+        mutex: mutex,
+        value: value,
+    };
+}
+
+public fun Mutex.free(&self) -> NoneResult {
+    return c.err.handleNone(self.mutex.destroy());
+}
+
+public fun Mutex.set(&self, value: T) -> NoneResult {
+    final lockRes = self.lock();
+    if !lockRes.isOk {
+        return lockRes.convertErr.<std.None>();
+    }
+
+    lockRes.unwrap().* = value;
+
+    final unlockRes = self.unlock();
+    if !unlockRes.isOk {
+        return unlockRes.convertErr.<std.None>();
+    }
+
+    return result.noneOk();
+}
+
+public fun Mutex.get(&self) -> Result.<T> {
+    final lockRes = self.lock();
+    if !lockRes.isOk {
+        return lockRes.convertErr.<T>();
+    }
+
+    final value = lockRes.unwrap().*;
+
+    final unlockRes = self.unlock();
+    if !unlockRes.isOk {
+        return unlockRes.convertErr.<T>();
+    }
+
+    return result.ok.<T>(value);
+}
+
+public fun Mutex.lock(&self) -> Result.<*T> {
+    return c.err.handle(self.mutex.lock()).mapDirect.<*T>(&self.value);
+}
+
+public fun Mutex.unlock(&self) -> NoneResult {
+    return c.err.handleNone(self.mutex.unlock());
+}

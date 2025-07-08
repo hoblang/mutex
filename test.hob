@@ -1,0 +1,21 @@
+import std;
+import os;
+import test;
+
+import "lib.hob" as mutex;
+
+global fun main() -> i32 {
+    return os.mainWithoutArgs(fun () {
+        test.case("simple usage", fun () {
+            var v = mutex.new.<i32>(1);
+            defer v.free();
+            std.panic.assert(v.get().unwrap() == 1, "expected 1");
+            v.set(2).unwrap();
+            std.panic.assert(v.get().unwrap() == 2, "expected 2");
+            v.set(3).unwrap();
+            std.panic.assert(v.get().unwrap() == 3, "expected 3");
+            return true;
+        });
+        return 0;
+    });
+}
